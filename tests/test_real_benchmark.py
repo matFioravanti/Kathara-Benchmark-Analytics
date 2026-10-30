@@ -50,5 +50,37 @@ class NativeReportsTest(unittest.TestCase):
             delta=pd.read_csv(out/"skill_paired_deltas.csv")
             self.assertAlmostEqual(delta.mean_delta_pp.iloc[0],50.)
 
+    def test_mismatch_is_audited_without_abort(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp)
+            self.fixture(root)
+            data=pd.read_csv(root/"runs.csv")
+            data.loc[data.skill_mode.eq("no_skill"),"checks_passed"]=2
+            data.to_csv(root/"runs.csv",index=False)
+            runs,checks=read_benchmark(root)
+            bad=runs[runs.skill_mode.eq("no_skill")].iloc[0]
+            self.assertEqual(bad.data_quality_status,"count_mismatch")
+            self.assertTrue(pd.isna(bad.test_rate))
+            self.assertEqual(bad.reported_passed_tests,2)
+            self.assertEqual(bad.detail_passed,1)
+            out=root/"charts"
+            produce(runs,checks,out,["png"])
+            quality=pd.read_csv(out/"data_quality_issues.csv")
+            self.assertEqual(len(quality),1)
+            self.assertEqual(quality.run_id.iloc[0],"run-no_skill")
+            self.assertEqual(len(pd.read_csv(out/"normalized_runs.csv")),2)
+
+    def test_missing_check_details_are_reported_not_fabricated(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp)
+            self.fixture(root)
+            rows=pd.read_csv(root/"checks.csv")
+            rows=rows[rows.ID.eq("run-no_skill")]
+            rows.to_csv(root/"checks.csv",index=False)
+            runs,checks=read_benchmark(root)
+            absent=runs[runs.skill_mode.eq("dns_only")].iloc[0]
+            self.assertEqual(absent.data_quality_status,"no_detail")
+            self.assertAlmostEqual(absent.test_rate,1.)
+
 if __name__=="__main__":
     unittest.main()
