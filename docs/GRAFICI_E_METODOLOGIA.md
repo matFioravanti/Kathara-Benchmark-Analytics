@@ -28,7 +28,7 @@ Analizzare i risultati di `Kathara-Skill-LLM` senza alterare i laboratori, il ch
 ### Condizioni preliminari di qualità
 
 - Gli ID delle run devono essere unici e i check devono riferirsi a run presenti.
-- Il numero di esiti `passed=True` e il numero di check valutati devono coincidere con `checks_passed` / `checks_total` delle run. In caso contrario, l'importazione si arresta anziché disegnare un valore errato.
+- Il numero di esiti `passed=True` e il numero di check valutati devono coincidere con `checks_passed` / `checks_total` delle run. In caso contrario, i punteggi discordanti sono esclusi dai grafici mentre le altre run vengono elaborate.
 - Le percentuali non sono calcolate su denominatori uguali a zero; `NaN` rappresenta informazione assente, non zero.
 - Non sono imputati valori di temperatura né ragioni di un errore che il checker non distingue.
 
@@ -78,3 +78,7 @@ python3 -m unittest discover -s tests -v
 ```
 
 Se il programma segnala ID o conteggi discordanti, **non modificare i numeri per far produrre il grafico**: verifica che `runs.csv` e `checks.csv` provengano dallo stesso export del benchmark.
+
+## 10. Controlli di coerenza fra esportazioni
+
+I file `runs.csv` e `checks.csv` possono essere stati copiati in momenti diversi. Lo script non si blocca più per una singola discordanza: conserva i conteggi originali, marca la run `count_mismatch` e la esclude dai grafici che dipendono da score o check. Le run non presenti nei dettagli sono marcate `no_detail` e possono contribuire alle sole analisi aggregate. Per trovare gli ID problematici consultare `grafici/data_quality_issues.csv` e `grafici/generation_log.txt`; `grafici/run_data_quality.csv` contiene tutti gli stati. Non correggere automaticamente i valori originali.
