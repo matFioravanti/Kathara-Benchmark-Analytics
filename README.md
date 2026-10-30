@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Grafici del benchmark Kathara-Skill-LLM
 
 Strumento Python con Matplotlib, pandas e NumPy. Il benchmark resta eseguito con
@@ -195,3 +196,7 @@ controlli non eseguiti, discrepanze fra report, duplicati, metadati incoerenti,
 mappatura JSON, file corrotti, input vuoto, input immutato, export PNG/PDF e
 confronto modelli limitato al campione comune. Aprire inoltre alcuni PNG/PDF
 per verificare etichette, legende e heatmap con i nomi reali dei laboratori.
+=======
+# Kathara-Benchmark-Analytics
+Python-based analytics and visualization framework for Kathara-Skill-LLM benchmark results, using Pandas and Matplotlib to evaluate LLM performance, DNS configuration accuracy, execution efficiency, and Skill effectiveness.
+>>>>>>> e69840388b1fb34357b9ca8259f5457e1118b2d6
