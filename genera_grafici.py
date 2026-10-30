@@ -77,6 +77,7 @@ def _heatmap(r,col,by,out,section,name,formats):
 
 
 def _failure_groups(c,r,out,formats):
+    c=c[c.data_quality_status.ne("count_mismatch")].copy()
     c=c.merge(r[["run_id","skill_mode"]],on="run_id",how="inner")
     evaluated=c[c.outcome.isin(["pass","fail"])]
     if evaluated.empty:
@@ -128,7 +129,8 @@ def render(runs,checks,out,formats):
         total_passed=("passed_tests","sum"),total_evaluated=("evaluated_tests","sum")
     ).to_csv(out/"skill_prompt_summary.csv")
     if "task_success" in runs:
-        runs.assign(success=runs.task_success.astype(str).str.lower().eq("true")).groupby(
+        reliable=runs[runs.data_quality_status.ne("count_mismatch")].copy()
+        reliable.assign(success=reliable.task_success.astype(str).str.lower().eq("true")).groupby(
             "skill_mode").agg(runs=("run_id","count"),fully_successful=("success","sum")).to_csv(
                 out/"full_task_success.csv")
     return n
@@ -155,6 +157,8 @@ def main(argv=None):
         (args.output/"LEGGIMI.txt").write_text(
             f"Run analizzate: {len(runs)}\nControlli analizzati: {len(checks)}\n"
             f"Grafici generati: {n}\n"
+            f"Run con conteggi discordanti: {int(runs.data_quality_status.eq('count_mismatch').sum())}\n"
+            "Controllare data_quality_issues.csv per i dettagli.\n"
             "La temperatura LLM non è stimata: le figure dipendono dai dati osservati.\n"
             "Le percentuali medie sono descrittive; verificare composizione dei gruppi.\n"
             "Leggere docs/GRAFICI_E_METODOLOGIA.md per interpretazione e limiti.\n",
