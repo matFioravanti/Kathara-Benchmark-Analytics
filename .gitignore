@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+.pytest_cache/
+benchmark_plots/
+synthetic_plots/
+.DS_Store

@@ -1,0 +1,31 @@
+{
+  "sources": [
+    {
+      "glob": "*runs*.json",
+      "kind": "runs",
+      "records_path": "results",
+      "columns": {
+        "scenario": "lab_id",
+        "prompt": "prompt_type",
+        "model": "model_name",
+        "run_id": "execution_id",
+        "passed_tests": "metrics.passed",
+        "evaluated_tests": "metrics.evaluated",
+        "completed": "validation_completed"
+      }
+    },
+    {
+      "glob": "*checks*.csv",
+      "kind": "checks",
+      "columns": {
+        "scenario": "lab_id",
+        "prompt": "prompt_type",
+        "model": "model_name",
+        "run_id": "execution_id",
+        "check_id": "test_id",
+        "check_type": "test_class",
+        "outcome": "result"
+      }
+    }
+  ]
+}
