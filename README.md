@@ -1,5 +1,26 @@
 # Grafici del benchmark Kathara-Skill-LLM
 
+## Avvio rapido: copia i file in `result/`
+
+Questa è l'interfaccia consigliata per i risultati reali. Copia i file
+`runs.csv` e `checks.csv` da `Kathara-Skill-LLM/results/` nella cartella
+**`result/`** di questa repository (puoi aggiungere anche `summary.csv`).
+
+Poi esegui dalla directory della repository:
+
+```bash
+python3 -m pip install -r requirements.txt
+python3 genera_grafici.py
+```
+
+Troverai **PNG, PDF e report CSV** in **`grafici/`**. Nessun mapping,
+parametro o nome di modello da specificare. La documentazione completa dei
+**grafici, delle metriche e dei limiti metodologici** è in
+[docs/GRAFICI_E_METODOLOGIA.md](docs/GRAFICI_E_METODOLOGIA.md).
+
+---
+
+
 Strumento Python con Matplotlib, pandas e NumPy. Il benchmark resta eseguito con
 la Skill; questo programma legge risultati e non modifica laboratori o checker.
 
