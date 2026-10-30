@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 import pandas as pd
 import genera_grafici
-from tests.test_real_benchmark import NativeReportsTest
+from test_real_benchmark import NativeReportsTest
 
 class DropInFlowTest(unittest.TestCase):
     def test_default_input_and_output_are_repo_directories(self):
@@ -18,6 +18,10 @@ class DropInFlowTest(unittest.TestCase):
             source=root/"result"
             source.mkdir()
             NativeReportsTest().fixture(source)
+            rows=pd.read_csv(source/"runs.csv")
+            rows["total_seconds"]=[120,100]
+            rows["total_tokens"]=[250,180]
+            rows.to_csv(source/"runs.csv",index=False)
             out=root/"grafici"
             self.assertEqual(genera_grafici.main(
                 ["--input",str(source),"--output",str(out),"--format","png"]),0)
