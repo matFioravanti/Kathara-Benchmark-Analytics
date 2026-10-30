@@ -60,14 +60,38 @@ def read_benchmark(src: Path):
                               flags=re.IGNORECASE, expand=False).fillna("").str.upper())
     # Classification is diagnostic-only and requires an explicit "resolve TYPE" pattern
     # in the checker reason. Generic DNS/custom checks are not silently relabeled.
-    if runs.test_rate.dropna().gt(1).any() or runs.test_rate.dropna().lt(0).any():
-        raise ValueError("Conteggi checker incoerenti")
-    counts = checks.assign(p=checks.outcome.eq("pass").astype(int),
-                           e=checks.outcome.isin(["pass","fail"]).astype(int)).groupby("run_id")[["p","e"]].sum()
-    aligned = runs.set_index("run_id").join(counts)
-    mismatch = (aligned.p.notna() & aligned.p.ne(aligned.passed_tests)) | (aligned.e.notna() & aligned.e.ne(aligned.evaluated_tests))
-    if mismatch.any():
-        raise ValueError(f"Conteggi aggregati e dettagliati discordanti per {int(mismatch.sum())} run")
+    # A run can appear in runs.csv before its detailed checks have been exported.
+    # A real mismatch must NOT abort the entire experiment or be silently scored.
+    detail = checks.assign(
+        detail_passed=checks.outcome.eq("pass").astype(int),
+        detail_evaluated=checks.outcome.isin(["pass", "fail"]).astype(int),
+        detail_unknown=checks.outcome.eq("unknown").astype(int),
+    ).groupby("run_id")[["detail_passed", "detail_evaluated", "detail_unknown"]].sum()
+    aligned = runs.set_index("run_id").join(detail)
+    runs["reported_passed_tests"] = runs["passed_tests"]
+    runs["reported_evaluated_tests"] = runs["evaluated_tests"]
+    for field in ["detail_passed", "detail_evaluated", "detail_unknown"]:
+        runs[field] = aligned[field].to_numpy()
+    no_detail = aligned.detail_evaluated.isna().to_numpy()
+    invalid = (
+        aligned.detail_evaluated.notna() &
+        (aligned.detail_unknown.ne(0) |
+         aligned.detail_passed.ne(aligned.passed_tests) |
+         aligned.detail_evaluated.ne(aligned.evaluated_tests))
+    ).to_numpy()
+    invalid |= (
+        (runs.passed_tests.lt(0) | runs.evaluated_tests.le(0) |
+         runs.passed_tests.gt(runs.evaluated_tests) |
+         runs.test_rate.gt(1) | runs.test_rate.lt(0)).fillna(False).to_numpy()
+    )
+    runs["data_quality_status"] = "consistent"
+    runs.loc[no_detail, "data_quality_status"] = "no_detail"
+    runs.loc[invalid, "data_quality_status"] = "count_mismatch"
+    # Retain the original counts in reported_* for the audit; never plot them
+    # as valid scores while the detailed export disagrees.
+    runs.loc[invalid, ["passed_tests", "evaluated_tests", "test_rate"]] = np.nan
+    checks["data_quality_status"] = checks.run_id.map(
+        runs.set_index("run_id")["data_quality_status"])
     return runs, checks
 
 def export_figure(fig, root, folder, name, formats):
@@ -80,11 +104,24 @@ def export_figure(fig, root, folder, name, formats):
 def produce(runs, checks, out, formats):
     out.mkdir(parents=True, exist_ok=True)
     runs.to_csv(out/"normalized_runs.csv", index=False)
-    checks.to_csv(out/"normalized_checks.csv",index=False)
-    log=[]
+    checks.to_csv(out/"normalized_checks.csv", index=False)
+    quality = runs[["run_id", "skill_mode", "data_quality_status",
+                    "reported_passed_tests", "reported_evaluated_tests",
+                    "detail_passed", "detail_evaluated", "detail_unknown"]].copy()
+    quality.to_csv(out/"run_data_quality.csv", index=False)
+    issues = quality[quality.data_quality_status.ne("consistent")]
+    issues.to_csv(out/"data_quality_issues.csv", index=False)
+    log = [(
+        f"AVVISO {row.run_id}: {row.data_quality_status}; "
+        f"runs.csv={row.reported_passed_tests}/{row.reported_evaluated_tests}; "
+        f"checks.csv={row.detail_passed}/{row.detail_evaluated}"
+    ) for row in issues.itertuples(index=False)]
+    # Inconsistent checks remain visible in normalized_checks.csv, but do not
+    # contaminate checker diagnostics or figures.
+    checks = checks[checks.data_quality_status.ne("count_mismatch")].copy()
     figures=0
-    modes=[x for x in MODES if x in set(runs.skill_mode)]
     valid=runs.dropna(subset=["test_rate"]).copy()
+    modes=[x for x in MODES if x in set(valid.skill_mode)]
     for key in PAIR:
         if key not in valid:
             valid[key]=""
