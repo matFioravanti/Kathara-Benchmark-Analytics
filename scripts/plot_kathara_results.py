@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 
 MODES = ["no_skill", "creation_only", "dns_only", "both_forced", "auto"]
-PAIR = ["experiment_id", "scenario", "prompt", "model", "replicate", "reasoning_effort", "correction_sha256"]
+PAIR = ["experiment_id", "scenario", "prompt", "model", "replicate", "reasoning_effort", "correction_sha256", "prompt_sha256", "skill_protocol", "agent"]
 
 def read_benchmark(src: Path):
     folder = src / "results" if (src / "results" / "runs.csv").exists() else src
@@ -43,7 +43,10 @@ def read_benchmark(src: Path):
     runs["test_rate"] = runs.passed_tests.div(runs.evaluated_tests.where(runs.evaluated_tests.gt(0)))
     for column in PAIR + ["llm_temperature","llm_top_p","sampling_temperature_status",
                           "sampling_top_p_status","total_seconds","agent_seconds","checker_seconds",
-                          "input_tokens","output_tokens","total_tokens","task_success"]:
+                          "input_tokens","output_tokens","total_tokens","task_success", "status",
+                          "skill_gate_status", "skill_gate_read_seconds", "skill_compliance_status",
+                          "required_reads_observed", "sampling_status", "sampling_source",
+                          "skill_gate_fallback_used", "skill_gate_retry_count"]:
         if column in ("scenario","prompt","model"):
             continue
         runs[column] = r[column] if column in r else ""
@@ -55,7 +58,8 @@ def read_benchmark(src: Path):
     # Diagnostic-only classification; failed results are not automatically reinterpreted.
     checks["record_type"] = (c.reason.str.extract(r"\bresolve\s+(A|AAAA|MX|NS|SOA|CNAME)\b",
                               flags=re.IGNORECASE, expand=False).fillna("").str.upper())
-    checks.loc[checks.check_type.ne("dns_record"),"record_type"] = ""
+    # Classification is diagnostic-only and requires an explicit "resolve TYPE" pattern
+    # in the checker reason. Generic DNS/custom checks are not silently relabeled.
     if runs.test_rate.dropna().gt(1).any() or runs.test_rate.dropna().lt(0).any():
         raise ValueError("Conteggi checker incoerenti")
     counts = checks.assign(p=checks.outcome.eq("pass").astype(int),
