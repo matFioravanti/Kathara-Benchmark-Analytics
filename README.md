@@ -1,26 +1,68 @@
-<<<<<<< HEAD
 # Grafici del benchmark Kathara-Skill-LLM
+
+## Avvio rapido: copia i file in `result/`
+
+Questa è l'interfaccia consigliata per i risultati reali. Copia i file
+`runs.csv` e `checks.csv` da `Kathara-Skill-LLM/results/` nella cartella
+**`result/`** di questa repository (puoi aggiungere anche `summary.csv`).
+
+Poi esegui dalla directory della repository:
+
+```bash
+python3 -m pip install -r requirements.txt
+python3 genera_grafici.py
+```
+
+Troverai **PNG, PDF e report CSV** in **`grafici/`**. Nessun mapping,
+parametro o nome di modello da specificare. La documentazione completa dei
+**grafici, delle metriche e dei limiti metodologici** è in
+[docs/GRAFICI_E_METODOLOGIA.md](docs/GRAFICI_E_METODOLOGIA.md).
+
+---
+
 
 Strumento Python con Matplotlib, pandas e NumPy. Il benchmark resta eseguito con
 la Skill; questo programma legge risultati e non modifica laboratori o checker.
 
+## Integrazione con il benchmark reale
+
+Il comando `scripts/plot_kathara_results.py` importa i file reali
+`results/runs.csv` e `results/checks.csv` prodotti da
+[matFioravanti/Kathara-Skill-LLM](https://github.com/matFioravanti/Kathara-Skill-LLM).
+La repository sorgente resta indipendente e non viene modificata.
+
+Dalla cartella `Kathara-Benchmark-Analytics`, con le dipendenze installate:
+
+```sh
+.venv/bin/python scripts/plot_kathara_results.py \
+  --input ../Kathara-Skill-LLM \
+  --output benchmark_plots_real \
+  --format png pdf
+```
+
+L'input può essere anche direttamente `../Kathara-Skill-LLM/results`.
+Output: `normalized_runs.csv`, `normalized_checks.csv`, `by_skill_prompt.csv`,
+`skill_matched_summary.csv`, `skill_paired_deltas.csv` (quando confrontabile),
+`sampling_coverage.csv`, `dns_record_failures.csv` e figure nei percorsi
+`11_skill/`, `12_sampling/`, `13_dns_diagnostics/`.
+
+**Regole metodologiche:** i controlli sono identificati dalla posizione nell'export
+per run e non dalla descrizione, che può ripetersi; i confronti Skill usano soltanto
+le medesime combinazioni esperimento/lab/albero/livello/prompt/modello/ripetizione/
+reasoning/correction; le metriche di temperatura sono visualizzate solo se osservate,
+mai inferite da default. I fallimenti MX restano fallimenti finché non viene verificato
+il checker; il grafico dei tipi record mostra *conteggi*, non un tasso di successo
+con denominatore non osservabile. Le analisi sono descrittive, non causali.
+Le grafici non vengono generati se mancano dati sufficienti.
+
 ## Stato dei dati e verifica
 
-La cartella di progetto era vuota: non erano disponibili repository, schema del
-checker o risultati reali. L'utente inserirà i risultati in `benchmark_results/`.
-Il contratto qui descritto è **un formato di importazione**, non una dichiarazione
-sullo schema effettivo di Kathara-Skill-LLM. Non sono stati inventati nomi delle
-categorie reali, traduzioni degli esiti del checker o classificazioni degli errori.
+Lo script originale `scripts/generate_benchmark_plots.py` mantiene il suo
+contratto generico per CSV/JSON in `benchmark_results/` e i test sintetici.
+La nuova integrazione, distinta, usa lo schema effettivo dei report CSV Kathara.
+L'importazione generica non deduce semantiche dai formati sconosciuti.
+I CSV usano virgole e punto decimale, e JSON numeri nativi.
 
-CSV e JSON sono supportati. Per YAML/Excel, esportare in CSV/JSON oppure aggiungere
-un adattatore dopo aver esaminato il formato effettivo; non sono necessarie librerie
-aggiuntive nel programma. I file originali possono restare in una cartella separata.
-I CSV devono usare virgole e punto decimale; JSON usa numeri nativi.
-
-Il codice è stato verificato sintatticamente. L'esecuzione dei test numerici e il
-controllo visivo dei grafici non sono stati completati nell'ambiente iniziale:
-le dipendenze non erano installate e il download non è stato autorizzato.
-I comandi sotto consentono di completare queste verifiche.
 
 ## Installazione ed esecuzione
 
@@ -196,7 +238,3 @@ controlli non eseguiti, discrepanze fra report, duplicati, metadati incoerenti,
 mappatura JSON, file corrotti, input vuoto, input immutato, export PNG/PDF e
 confronto modelli limitato al campione comune. Aprire inoltre alcuni PNG/PDF
 per verificare etichette, legende e heatmap con i nomi reali dei laboratori.
-=======
-# Kathara-Benchmark-Analytics
-Python-based analytics and visualization framework for Kathara-Skill-LLM benchmark results, using Pandas and Matplotlib to evaluate LLM performance, DNS configuration accuracy, execution efficiency, and Skill effectiveness.
->>>>>>> e69840388b1fb34357b9ca8259f5457e1118b2d6

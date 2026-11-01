@@ -4,3 +4,10 @@ __pycache__/
 benchmark_plots/
 synthetic_plots/
 .DS_Store
+
+# Risultati sperimentali locali e artefatti generati
+result/*.csv
+result/*.xlsx
+result/*.json
+grafici/
+benchmark_plots_real/
